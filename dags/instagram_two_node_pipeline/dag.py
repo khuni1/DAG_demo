@@ -10,12 +10,12 @@ from uuid import uuid4
 import pendulum
 from airflow.sdk import dag, task
 
-from instagram_activity_demo.cluster_model import (
+from instagram_two_node_pipeline.model import (
     predict_activity_clusters,
     train_two_cluster_model,
 )
-from instagram_activity_demo.collector import collect_from_environment
-from instagram_activity_demo.feature_store import (
+from instagram_two_node_pipeline.collector import collect_fixture
+from instagram_two_node_pipeline.feature_store import (
     load_feature_batch,
     preprocess_records,
     store_feature_batch,
@@ -24,7 +24,7 @@ from instagram_activity_demo.feature_store import (
 
 # Git Bundle이 checkout되는 실제 경로를 기준으로 fixture 위치를 계산한다.
 DAG_DIRECTORY = Path(__file__).resolve().parent
-FIXTURE_DIRECTORY = DAG_DIRECTORY / "instagram_activity_demo" / "fixtures"
+FIXTURE_DIRECTORY = DAG_DIRECTORY / "fixtures"
 NODE_A_DATA_ROOT = Path(
     os.getenv(
         "INSTAGRAM_DEMO_DATA_DIR",
@@ -70,9 +70,7 @@ def instagram_two_node_feature_model_demo() -> None:
         # 노드 A에서 mock Instagram 이름과 게시글 수를 수집한다.
         run_directory = NODE_A_DATA_ROOT / uuid4().hex
         raw_path = run_directory / "raw_influencers.json"
-        records = collect_from_environment(
-            FIXTURE_DIRECTORY / "influencers.json"
-        )
+        records = collect_fixture(FIXTURE_DIRECTORY / "influencers.json")
         _write_json(raw_path, records)
         return str(raw_path)
 
@@ -87,7 +85,7 @@ def instagram_two_node_feature_model_demo() -> None:
         batch_id = raw_path.parent.name
         store_feature_batch(
             batch_id=batch_id,
-            source_mode=os.getenv("INSTAGRAM_DEMO_MODE", "fixture"),
+            source_mode="fixture",
             records=features,
         )
         # 노드 사이에는 파일 대신 32자리 batch_id만 전달한다.

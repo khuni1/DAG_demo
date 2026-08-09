@@ -4,7 +4,7 @@ import math
 import os
 from typing import Any
 
-from instagram_activity_demo.collector import validate_records
+from instagram_two_node_pipeline.collector import validate_records
 
 
 FEATURE_STORE_DATABASE = "instagram_feature_store"
@@ -87,7 +87,6 @@ def ensure_schema() -> None:
         connection.commit()
     finally:
         connection.close()
-
 
 def store_feature_batch(
     *,
